@@ -1,4 +1,6 @@
 FROM node:8.1.2-alpine
-VOLUME app /usr/src/app
+COPY app /usr/src/app
 
-CMD node app.js
+RUN cd /usr/src/app && npm install
+
+CMD node /usr/src/app/app.js
