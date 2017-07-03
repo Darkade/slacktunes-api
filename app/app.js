@@ -2,25 +2,26 @@
 var express = require('express');
 var request = require('request');
 var bodyParser = require('body-parser');
-
-
+var Mopidy = require('mopidy');
 
 // Store our app's ID and Secret. These we got from Step 1.
 // For this tutorial, we'll keep your API credentials right here. But for an actual app, you'll want to  store them securely in environment variables.
-var clientId = '';
-var clientSecret = '';
+var clientId = process.env.SLACKID;
+var clientSecret = process.env.SLACKSECRET;
+
+var mopidyurl = process.env.MOPIDYURL || '192.168.99.100';
+var mopidyport = process.env.MOPIDYPORT || '6680';
+
+// Instantiates Mopidy Websockets
+var mopidy = new Mopidy({ webSocketUrl: `ws://${mopidyurl}:${mopidyport}/mopidy/ws/` });
 
 // Instantiates Express and assigns our app variable to it
 var app = express();
 app.use(bodyParser.json());
-// in latest body-parser use like below.
 app.use(bodyParser.urlencoded({ extended: true }));
-
-
 
 // Again, we define a port we want to listen to
 const PORT=4390;
-
 // Lets start our server
 app.listen(PORT, function () {
     //Callback triggered when server is successfully listening. Hurray!
@@ -60,17 +61,25 @@ app.get('/oauth', function(req, res) {
     }
 });
 
-// Route the endpoint that our slash command will point to and send back a simple response to indicate that ngrok is working
+///////////////////////////
+// Slack Commands /////////
+///////////////////////////
+
 app.post('/command', function(req, res) {
-  console.log('Resolving command...');
-  switch (req.body.text){
+  console.log('Resolving command...', req.body.text);
+
+  switch (req.body.text.split(" ")[0]){
+
+    case "search":
+      res.send("Search a song");
+      break;
 
     case "prev":
       res.send("Previous Song");
       break;
 
     case "add":
-      res.send("Add Song");
+      res.send("Adding a song");
       break;
 
     case "skip":
