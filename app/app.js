@@ -4,8 +4,7 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var Mopidy = require('mopidy');
 
-// Store our app's ID and Secret. These we got from Step 1.
-// For this tutorial, we'll keep your API credentials right here. But for an actual app, you'll want to  store them securely in environment variables.
+// Get Environment Apps
 var clientId = process.env.SLACKID;
 var clientSecret = process.env.SLACKSECRET;
 
@@ -20,9 +19,8 @@ var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Again, we define a port we want to listen to
+// Start app in PORT
 const PORT=4390;
-// Lets start our server
 app.listen(PORT, function () {
     //Callback triggered when server is successfully listening. Hurray!
     console.log("Slacktunes listening on port " + PORT);
@@ -65,13 +63,67 @@ app.get('/oauth', function(req, res) {
 // Slack Commands /////////
 ///////////////////////////
 
+var returnSearchResult = function(searchResult){
+  let tracks = searchResult[1].tracks.slice(0,5);
+  for (let track of tracks){
+    console.log(`${track.name} – ${track.album.name} (${track.date})`);
+  }
+  return {
+      "text": "Would you like to play a game?",
+      "attachments": [
+          {
+              "text": "Choose a game to play",
+              "fallback": "You are unable to choose a game",
+              "callback_id": "wopr_game",
+              "color": "#3AA3E3",
+              "attachment_type": "default",
+              "actions": [
+                  {
+                      "name": "game",
+                      "text": "Chess",
+                      "type": "button",
+                      "value": "chess"
+                  },
+                  {
+                      "name": "game",
+                      "text": "Falken's Maze",
+                      "type": "button",
+                      "value": "maze"
+                  },
+                  {
+                      "name": "game",
+                      "text": "Thermonuclear War",
+                      "style": "danger",
+                      "type": "button",
+                      "value": "war",
+                      "confirm": {
+                          "title": "Are you sure?",
+                          "text": "Wouldn't you prefer a good game of chess?",
+                          "ok_text": "Yes",
+                          "dismiss_text": "No"
+                      }
+                  }
+              ]
+          }
+      ]
+  }
+}
+
 app.post('/command', function(req, res) {
   console.log('Resolving command...', req.body.text);
 
-  switch (req.body.text.split(" ")[0]){
+  let command = req.body.text.split(" ")[0];
+  let query = req.body.text.split(" ").slice(1).join(" ");
+
+  switch (command){
 
     case "search":
-      res.send("Search a song");
+      mopidy.library.search({'any': [query]})
+                    .then(returnSearchResult)
+                    .then(function(msg){
+                      res.send(msg)
+                    });
+//      res.send("Search a song");
       break;
 
     case "prev":
