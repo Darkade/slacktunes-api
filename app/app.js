@@ -98,6 +98,18 @@ var getSongName = function(tracks){
   return track.name
 }
 
+var getQueue = function(tracks){
+  return mopidy.tracklist.index()
+                    .then((index)=>{
+                          let tracklist = Array();
+                        for (let tltrack of tracks.slice(index)){
+                          let track = tltrack.track;
+                         tracklist.push(`${track.name} – ${track.album.name} (${track.date})`);
+                      }
+                    return tracklist.join("\n");
+                  });
+}
+
 app.post('/command', function(req, res) {
   console.log('Resolving command...', req.body.text);
 
@@ -116,10 +128,12 @@ app.post('/command', function(req, res) {
 
     case "skip":
       let nowPlaying = null;
+
       mopidy.playback.getCurrentTrack()
                            .then((track)=>{
                              nowPlaying=track;
-                           })
+                           });
+
       mopidy.playback.next()
             .then(()=>{
                         let msg = {
@@ -129,10 +143,16 @@ app.post('/command', function(req, res) {
                         }
               res.send(msg);
             });
+
       break;
 
     case "list":
-      res.send("Playlist");
+      mopidy.tracklist.getTlTracks()
+                      .then(getQueue)
+                      .done((msg)=>{
+                        res.send(msg)
+                      });
+
       break;
 
   }
