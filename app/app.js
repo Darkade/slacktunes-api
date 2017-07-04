@@ -22,41 +22,41 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Start app in PORT
 const PORT=4390;
 app.listen(PORT, function () {
-    //Callback triggered when server is successfully listening. Hurray!
-    console.log("Slacktunes listening on port " + PORT);
+  //Callback triggered when server is successfully listening. Hurray!
+  console.log("Slacktunes listening on port " + PORT);
 });
 
 
 // This route handles GET requests to our root ngrok address and responds with the same "Ngrok is working message" we used before
 app.get('/', function(req, res) {
-    res.send('Ngrok is working! Path Hit: ' + req.url);
+  res.send('Ngrok is working! Path Hit: ' + req.url);
 });
 
 // This route handles get request to a /oauth endpoint. We'll use this endpoint for handling the logic of the Slack oAuth process behind our app.
 app.get('/oauth', function(req, res) {
-    // When a user authorizes an app, a code query parameter is passed on the oAuth endpoint. If that code is not there, we respond with an error message
-    if (!req.query.code) {
-        res.status(500);
-        res.send({"Error": "Looks like we're not getting code."});
-        console.log("Looks like we're not getting code.");
-    } else {
-        // If it's there...
+  // When a user authorizes an app, a code query parameter is passed on the oAuth endpoint. If that code is not there, we respond with an error message
+  if (!req.query.code) {
+    res.status(500);
+    res.send({"Error": "Looks like we're not getting code."});
+    console.log("Looks like we're not getting code.");
+  } else {
+    // If it's there...
 
-        // We'll do a GET call to Slack's `oauth.access` endpoint, passing our app's client ID, client secret, and the code we just got as query parameters.
-        request({
-            url: 'https://slack.com/api/oauth.access', //URL to hit
-            qs: {code: req.query.code, client_id: clientId, client_secret: clientSecret}, //Query string data
-            method: 'GET', //Specify the method
+    // We'll do a GET call to Slack's `oauth.access` endpoint, passing our app's client ID, client secret, and the code we just got as query parameters.
+    request({
+      url: 'https://slack.com/api/oauth.access', //URL to hit
+      qs: {code: req.query.code, client_id: clientId, client_secret: clientSecret}, //Query string data
+      method: 'GET', //Specify the method
 
-        }, function (error, response, body) {
-            if (error) {
-                console.log(error);
-            } else {
-                res.json(body);
+    }, function (error, response, body) {
+      if (error) {
+        console.log(error);
+      } else {
+        res.json(body);
 
-            }
-        })
-    }
+      }
+    })
+  }
 });
 
 ///////////////////////////
@@ -68,29 +68,34 @@ var returnSearchResult = function(searchResult){
   options = Array();
   for (let track of tracks){
     options.push({"text": `${track.name} – ${track.album.name} (${track.date})`,
-                  "value": track.uri});
+    "value": track.uri});
   }
   return {
     "text": "Encontré estas cancones",
     "response_type": "ephemeral",
     "attachments": [
-        {
-            "text": "Escoge cual te gustaría agregar al playlist",
-            "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
-            "color": "#3AA3E3",
-            "attachment_type": "default",
-            "callback_id": "game_selection",
-            "actions": [
-                {
-                    "name": "games_list",
-                    "text": "Escoge una canción...",
-                    "type": "select",
-                    "options": options
-                }
-            ]
-        }
+      {
+        "text": "Escoge cual te gustaría agregar al playlist",
+        "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
+        "color": "#3AA3E3",
+        "attachment_type": "default",
+        "callback_id": "addSong",
+        "actions": [
+          {
+            "name": "searchresults",
+            "text": "Escoge una canción...",
+            "type": "select",
+            "options": options
+          }
+        ]
+      }
     ]
+  }
 }
+
+var getSongName = function(tracks){
+  let track = tracks[0].track;
+  return track.name
 }
 
 app.post('/command', function(req, res) {
@@ -104,7 +109,7 @@ app.post('/command', function(req, res) {
     case "search":
       mopidy.library.search({'any': [query]})
                     .then(returnSearchResult)
-                    .then(function(msg){
+                    .then((msg) => {
                       res.send(msg)
                     });
       break;
@@ -130,6 +135,26 @@ app.post('/command', function(req, res) {
 });
 
 app.post('/buttons', function(req, res) {
-  console.log(req)
-  res.send("Recibí la respuesta");
+
+  let body = JSON.parse(req.body.payload);
+  let actions = body.actions;
+  let callback = body.callback_id;
+
+  switch (callback){
+    case "addSong":
+      let songuri = actions[0].selected_options[0].value;
+      mopidy.tracklist.add(null, null, songuri, null)
+                      .then(getSongName)
+                      .done((songName)=>{
+                        res.send(`Se agregó ${songName}`)
+                      })
+
+      mopidy.playback.getCurrentTrack()
+                           .then((track)=>{
+                             if (!track){
+                               mopidy.playback.play()
+                             }
+                           })
+      break;
+  }
 });
