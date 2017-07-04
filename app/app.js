@@ -65,48 +65,32 @@ app.get('/oauth', function(req, res) {
 
 var returnSearchResult = function(searchResult){
   let tracks = searchResult[1].tracks.slice(0,5);
+  options = Array();
   for (let track of tracks){
-    console.log(`${track.name} – ${track.album.name} (${track.date})`);
+    options.push({"text": `${track.name} – ${track.album.name} (${track.date})`,
+                  "value": track.uri});
   }
   return {
-      "text": "Would you like to play a game?",
-      "attachments": [
-          {
-              "text": "Choose a game to play",
-              "fallback": "You are unable to choose a game",
-              "callback_id": "wopr_game",
-              "color": "#3AA3E3",
-              "attachment_type": "default",
-              "actions": [
-                  {
-                      "name": "game",
-                      "text": "Chess",
-                      "type": "button",
-                      "value": "chess"
-                  },
-                  {
-                      "name": "game",
-                      "text": "Falken's Maze",
-                      "type": "button",
-                      "value": "maze"
-                  },
-                  {
-                      "name": "game",
-                      "text": "Thermonuclear War",
-                      "style": "danger",
-                      "type": "button",
-                      "value": "war",
-                      "confirm": {
-                          "title": "Are you sure?",
-                          "text": "Wouldn't you prefer a good game of chess?",
-                          "ok_text": "Yes",
-                          "dismiss_text": "No"
-                      }
-                  }
-              ]
-          }
-      ]
-  }
+    "text": "Encontré estas cancones",
+    "response_type": "ephemeral",
+    "attachments": [
+        {
+            "text": "Escoge cual te gustaría agregar al playlist",
+            "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "callback_id": "game_selection",
+            "actions": [
+                {
+                    "name": "games_list",
+                    "text": "Escoge una canción...",
+                    "type": "select",
+                    "options": options
+                }
+            ]
+        }
+    ]
+}
 }
 
 app.post('/command', function(req, res) {
@@ -123,7 +107,6 @@ app.post('/command', function(req, res) {
                     .then(function(msg){
                       res.send(msg)
                     });
-//      res.send("Search a song");
       break;
 
     case "prev":
@@ -144,4 +127,9 @@ app.post('/command', function(req, res) {
 
   }
 
+});
+
+app.post('/buttons', function(req, res) {
+  console.log(req)
+  res.send("Recibí la respuesta");
 });
