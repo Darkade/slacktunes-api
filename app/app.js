@@ -106,7 +106,7 @@ app.post('/command', function(req, res) {
 
   switch (command){
 
-    case "search":
+    case "add":
       mopidy.library.search({'any': [query]})
                     .then(returnSearchResult)
                     .then((msg) => {
@@ -114,16 +114,21 @@ app.post('/command', function(req, res) {
                     });
       break;
 
-    case "prev":
-      res.send("Previous Song");
-      break;
-
-    case "add":
-      res.send("Adding a song");
-      break;
-
     case "skip":
-      res.send("Skip Song");
+      let nowPlaying = null;
+      mopidy.playback.getCurrentTrack()
+                           .then((track)=>{
+                             nowPlaying=track;
+                           })
+      mopidy.playback.next()
+            .then(()=>{
+                        let msg = {
+                            "text": `"${nowPlaying.name}" was skipped by @${req.body.user_name}`,
+                            "mrkdwn": false,
+                            "response_type": "in_channel",
+                        }
+              res.send(msg);
+            });
       break;
 
     case "list":
