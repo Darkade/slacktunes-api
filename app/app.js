@@ -102,14 +102,14 @@ var getSongName = function(tracks){
 
 var getQueue = function(tracks){
   return mopidy.tracklist.index()
-                    .then((index)=>{
-                          let tracklist = Array();
-                        for (let tltrack of tracks.slice(index)){
-                          let track = tltrack.track;
-                         tracklist.push(`${track.name} – ${track.album.name} (${track.date})`);
-                      }
-                    return tracklist.join("\n");
-                  });
+  .then((index)=>{
+    let tracklist = Array();
+    for (let tltrack of tracks.slice(index)){
+      let track = tltrack.track;
+      tracklist.push(`${track.name} – ${track.album.name} (${track.date})`);
+    }
+    return tracklist.join("\n");
+  });
 }
 
 app.post('/command', function(req, res) {
@@ -122,38 +122,38 @@ app.post('/command', function(req, res) {
 
     case "add":
       mopidy.library.search({'any': [query]})
-                    .then(returnSearchResult)
-                    .then((msg) => {
-                      res.send(msg)
-                    });
+      .then(returnSearchResult)
+      .then((msg) => {
+        res.send(msg)
+      });
       break;
 
     case "skip":
       let nowPlaying = null;
 
       mopidy.playback.getCurrentTrack()
-                           .then((track)=>{
-                             nowPlaying=track;
-                           });
+      .then((track)=>{
+        nowPlaying=track;
+      });
 
       mopidy.playback.next()
-            .then(()=>{
-                        let msg = {
-                            "text": `"${nowPlaying.name}" was skipped by @${req.body.user_name}`,
-                            "mrkdwn": false,
-                            "response_type": "in_channel",
-                        }
-              res.send(msg);
-            });
+      .then(()=>{
+        let msg = {
+          "text": `"${nowPlaying.name}" was skipped by @${req.body.user_name}`,
+          "mrkdwn": false,
+          "response_type": "ephemeral",
+        }
+        res.send(msg);
+      });
 
       break;
 
     case "list":
       mopidy.tracklist.getTlTracks()
-                      .then(getQueue)
-                      .done((msg)=>{
-                        res.send(msg)
-                      });
+      .then(getQueue)
+      .done((msg)=>{
+        res.send(msg)
+      });
 
       break;
 
@@ -169,44 +169,59 @@ app.post('/buttons', function(req, res) {
 
   switch (callback){
     case "addSong":
-      let songuri = actions[0].selected_options[0].value;
-      mopidy.tracklist.add(null, null, songuri, null)
-                      .then(getSongName)
-                      .done((songName)=>{
-                        res.send(`Se agregó ${songName}`)
-                      })
+    let songuri = actions[0].selected_options[0].value;
+    mopidy.tracklist.add(null, null, songuri, null)
+    .then(getSongName)
+    .done((songName)=>{
+      res.send(`Se agregó ${songName}`)
+    })
 
-      mopidy.playback.getCurrentTrack()
-                           .then((track)=>{
-                             if (!track){
-                               mopidy.playback.play()
-                             }
-                           })
-      break;
+    mopidy.playback.getCurrentTrack()
+    .then((track)=>{
+      if (!track){
+        mopidy.playback.play()
+      }
+    })
+    break;
   }
 });
 
 var postSong = function(){
   mopidy.playback.getCurrentTrack().
-                 then((track)=>{
-                   console.log(track.name);
-                   let options = {
-                     url: slackhook,
-                     method: 'POST',
-                     headers: {
-                       'Content-Type': 'application/json'
-                     },
-                     json: {
-                       "text": `Now Playing ${track.name}`,
-                       "response_type": "in_channel"
-                     }
-                   };
-                   request(options, function(error, response, body) {
-                     console.log('error:', error); // Print the error if one occurred
-                     console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-                     console.log('body:', body); // Print the HTML for the Google homepage.
-                   });
-                 })
+  then((track)=>{
+    console.log(track.album.images);
+
+    let options = {
+      url: slackhook,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      json: {
+        "response_type": "in_channel",
+        "attachments": [
+          {
+            "pretext": "_Now Playing_",
+            "title": track.name,
+            "text": "album & artist",
+            "mrkdwn_in": [
+              "text",
+              "pretext"
+            ],
+//            "image_url": track.album.images[0] || "",
+            "thumb_url": track.album.images[0] || "",
+            "footer": "Slack API",
+            "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
+          }
+        ]
+      }
+    };
+    request(options, function(error, response, body) {
+      console.log('error:', error); // Print the error if one occurred
+      console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+      console.log('body:', body); // Print the HTML for the Google homepage.
+    });
+  })
 }
 
 mopidy.on("event:trackPlaybackStarted", postSong);
