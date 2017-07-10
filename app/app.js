@@ -11,7 +11,7 @@ var clientSecret = process.env.SLACKSECRET;
 var mopidyurl = process.env.MOPIDYURL || '192.168.99.100';
 var mopidyport = process.env.MOPIDYPORT || '6680';
 
-var slackhook = process.env.SLACKHOOK || "https://hooks.slack.com/services/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";
+var slackhook = process.env.SLACKHOOK || "https://hooks.slack.com/services/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";
 var listenurl = process.env.LISTENURL || "https://0d450da7.ngrok.io";
 
 // Instantiates Mopidy Websockets
@@ -70,7 +70,7 @@ var returnSearchResult = function(searchResult){
   let tracks = searchResult[1].tracks.slice(0,5);
   options = Array();
   for (let track of tracks){
-    options.push({"text": `${track.name} – ${track.album.name} (${track.date})`,
+    options.push({"text": `${track.name} – ${track.album.artists[0].name} – ${track.album.name} (${track.date})`,
     "value": track.uri});
   }
   return {
@@ -107,7 +107,7 @@ var getQueue = function(tracks){
     let tracklist = Array();
     for (let tltrack of tracks.slice(index)){
       let track = tltrack.track;
-      tracklist.push(`${track.name} – ${track.album.name} (${track.date})`);
+      tracklist.push(`${track.name} – ${track.album.artists[0].name} – ${track.album.name} (${track.date})`);
     }
     return tracklist.join("\n");
   });
@@ -206,14 +206,14 @@ var postSong = function(){
             "pretext": "_Now Playing:_",
             "title": track.name,
             "title_link": listenurl,
-            "text": "album & artist",
+            "text": `${track.album.artists[0].name} - ${track.album.name}`,
             "mrkdwn_in": [
               "text",
               "pretext"
             ],
             "thumb_url": track.album.images[0] || "",
             "footer": `Listen here: ${listenurl}`,
-            "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
+            "footer_icon": "https://emoji.slack-edge.com/T2A1W6938/cassette/daff7a64b5c7863d.png",
           }
         ]
       }
