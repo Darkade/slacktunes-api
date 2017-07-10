@@ -11,6 +11,8 @@ var clientSecret = process.env.SLACKSECRET;
 var mopidyurl = process.env.MOPIDYURL || '192.168.99.100';
 var mopidyport = process.env.MOPIDYPORT || '6680';
 
+var slackhook = "https://hooks.slack.com/services/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";
+
 // Instantiates Mopidy Websockets
 var mopidy = new Mopidy({ webSocketUrl: `ws://${mopidyurl}:${mopidyport}/mopidy/ws/` });
 
@@ -183,3 +185,28 @@ app.post('/buttons', function(req, res) {
       break;
   }
 });
+
+var postSong = function(){
+  mopidy.playback.getCurrentTrack().
+                 then((track)=>{
+                   console.log(track.name);
+                   let options = {
+                     url: slackhook,
+                     method: 'POST',
+                     headers: {
+                       'Content-Type': 'application/json'
+                     },
+                     json: {
+                       "text": `Now Playing ${track.name}`,
+                       "response_type": "in_channel"
+                     }
+                   };
+                   request(options, function(error, response, body) {
+                     console.log('error:', error); // Print the error if one occurred
+                     console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+                     console.log('body:', body); // Print the HTML for the Google homepage.
+                   });
+                 })
+}
+
+mopidy.on("event:trackPlaybackStarted", postSong);
