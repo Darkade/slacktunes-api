@@ -11,7 +11,8 @@ var clientSecret = process.env.SLACKSECRET;
 var mopidyurl = process.env.MOPIDYURL || '192.168.99.100';
 var mopidyport = process.env.MOPIDYPORT || '6680';
 
-var slackhook = "https://hooks.slack.com/services/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";
+var slackhook = process.env.SLACKHOOK || "https://hooks.slack.com/services/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";
+var listenurl = process.env.LISTENURL || "https://0d450da7.ngrok.io";
 
 // Instantiates Mopidy Websockets
 var mopidy = new Mopidy({ webSocketUrl: `ws://${mopidyurl}:${mopidyport}/mopidy/ws/` });
@@ -198,19 +199,20 @@ var postSong = function(){
         'Content-Type': 'application/json'
       },
       json: {
+        "fallback": `Now playing ${track.name}`,
         "response_type": "in_channel",
         "attachments": [
           {
-            "pretext": "_Now Playing_",
+            "pretext": "_Now Playing:_",
             "title": track.name,
+            "title_link": listenurl,
             "text": "album & artist",
             "mrkdwn_in": [
               "text",
               "pretext"
             ],
-//            "image_url": track.album.images[0] || "",
             "thumb_url": track.album.images[0] || "",
-            "footer": "Slack API",
+            "footer": `Listen here: ${listenurl}`,
             "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
           }
         ]
