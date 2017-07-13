@@ -158,6 +158,15 @@ app.post('/command', function(req, res) {
 
       break;
 
+    case "clear":
+      mopidy.tracklist.clear()
+      .done(()=>{
+        console.log("Cleared queue");
+      });
+      break;
+
+    default:
+      res.send("No es un comando de Mopidy");
   }
 
 });
