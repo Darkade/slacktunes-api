@@ -162,11 +162,16 @@ app.post('/command', function(req, res) {
       mopidy.tracklist.clear()
       .done(()=>{
         console.log("Cleared queue");
+        res.send({
+          "text": `"Playlis was cleared by @${req.body.user_name}`,
+          "mrkdwn": false,
+          "response_type": "ephemeral",
+        })
       });
       break;
 
     default:
-      res.send("No es un comando de Mopidy");
+      res.send("No es un comando de Mopidy. Type /mopidy to learn more.");
   }
 
 });
@@ -221,7 +226,7 @@ var postSong = function(){
               "pretext"
             ],
             "thumb_url": track.album.images[0] || "",
-            "footer": `Listen here: ${listenurl}`,
+            "footer": `[Listen here](${listenurl}) - type /mopidy to learn more!`,
             "footer_icon": "https://emoji.slack-edge.com/T2A1W6938/cassette/daff7a64b5c7863d.png",
           }
         ]
