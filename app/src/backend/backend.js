@@ -1,0 +1,127 @@
+let mpd = require('./mopidyws');
+let comm = require('./comm');
+
+let mopidy = mpd.mopidy;
+let SendMessage = comm.SendMessage;
+
+function SearchMessage(searchResult){
+  console.log("... looking for tracks")
+  let msg = "";
+
+  if (searchResult[1].tracks) {
+    let tracks = searchResult[1].tracks.slice(0,5);
+    let options = Array();
+
+    for (let track of tracks){
+      options.push({"text": `${track.name} – ${track.album.artists[0].name} – ${track.album.name} (${track.date})`,
+      "value": track.uri});
+    }
+
+    msg = {
+      "text": "I found these songs:",
+      "response_type": "ephemeral",
+      "attachments": [
+        {
+          "text": "Choose one to add to the playlist...",
+          "fallback": "Found some songs...",
+          "color": "#3AA3E3",
+          "attachment_type": "default",
+          "callback_id": "addSong",
+          "actions": [
+            {
+              "name": "searchresults",
+              "text": "Pick a song...",
+              "type": "select",
+              "options": options
+            }
+          ]
+        }
+      ]
+    }
+  }
+  else {
+    msg = {
+      "text": "I found no songs!",
+      "response_type": "ephemeral"
+    }
+  }
+  return msg
+}
+
+function QueueMessage(tracks){
+  let tracklist = Array();
+  let msg = "";
+  if (tracks.length > 0){
+    for (let tltrack of tracks){
+      let track = tltrack.track;
+      tracklist.push(`${track.name} – ${track.album.artists[0].name}`);
+    }
+    msg = {
+      "text": "This is the current tracklist \n" + tracklist.join("\n"),
+      "response_type": "ephemeral"
+    }
+  }
+  else {
+    msg = {
+      "text": "The playlist is empty! Go add some tracks with `/mopidy search`",
+      "response_type": "ephemeral"
+    }
+  }
+
+  return msg
+}
+
+function SkipMessage(track, user){
+  let msg = "";
+  console.log("Skipping track")
+  if (track){
+    msg = {
+      "text": `"${track.name}" was skipped by @${user}`,
+      "response_type": "in_channel"
+    }
+  }
+  else {
+    msg = {
+      "text":"There's no track playing. Go add one with `/mopidy search`",
+      "response_type": "ephimeral"
+    }
+  }
+  console.log("This is the skip message", msg)
+  return msg
+}
+
+function ClearMessage(user){
+  console.log("Clearing playlist")
+  let msg = {
+    "text": `Playlist was cleared by @${user}`,
+    "response_type": "in_channel"
+  }
+  return msg
+}
+
+/***********************/
+
+exports.search = function (query, url){
+  mopidy.library.search({'any': [query]})
+  .then(SearchMessage)
+  .done((msg) => { SendMessage(msg, url) })
+}
+
+exports.list = function (url){
+  mopidy.tracklist.getTlTracks()
+  .then(QueueMessage)
+  .done((msg)=>{ SendMessage(msg, url) });
+}
+
+exports.skip = function (user, url){
+  mopidy.playback.getCurrentTrack()
+  .then((track)=>{ SkipMessage(track, user) })
+  .then((msg) => { SendMessage(msg, url) })
+  .done(mopidy.playback.next());
+}
+
+exports.clear = function (user, url){
+  mopidy.tracklist.clear()
+  .then(()=>{ ClearMessage(user) })
+  .done((msg)=> { SendMessage(msg, url) })
+}
