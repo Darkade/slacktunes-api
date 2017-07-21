@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var env = require('./src/env');
 var commands = require('./src/commands');
 var buttons = require('./src/buttons');
+var events = require('./src/events');
 
 // Instantiates Express and assigns our app variable to it
 var app = express();
@@ -17,7 +18,7 @@ app.listen(PORT, () => {
 });
 
 app.get('/', (req, res) => {res.send("... listening")});
-app.get('/oauth', (req, res)=>{ 
+app.get('/oauth', (req, res)=>{
   // When a user authorizes an app, a code query parameter is passed on the oAuth endpoint. If that code is not there, we respond with an error message
   if (!req.query.code) {
     res.status(500);

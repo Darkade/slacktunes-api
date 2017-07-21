@@ -1,5 +1,6 @@
 let mpd = require('./mopidyws');
 let comm = require('./comm');
+var env = require('../env');
 
 let mopidy = mpd.mopidy;
 let SendMessage = comm.SendMessage;
@@ -100,12 +101,42 @@ function ClearMessage(user){
   return msg
 }
 
+function NowPlayingMessage(track){
+  let msg = {
+    "fallback": `Now playing ${track.name}`,
+    "response_type": "in_channel",
+    "attachments": [
+      {
+        "pretext": "_Now Playing:_",
+        "title": track.name,
+        "title_link": env.listenurl,
+        "text": `${track.album.artists[0].name} - ${track.album.name}`,
+        "mrkdwn_in": [
+          "text",
+          "pretext",
+          "footer"
+        ],
+        "thumb_url": track.album.images[0] || "",
+        "footer": `Listen here: ${env.listenurl}\nTry typing \`/mopidy\` to learn more!`,
+        "footer_icon": "https://emoji.slack-edge.com/T2A1W6938/cassette/daff7a64b5c7863d.png",
+      }
+    ]
+  }
+  return msg
+}
+
 /***********************/
+
+exports.postSong = function (){
+  mopidy.playback.getCurrentTrack()
+  .then(NowPlayingMessage)
+  .done((msg) => { SendMessage(msg, env.slackhook) });
+}
 
 exports.search = function (query, url){
   mopidy.library.search({'any': [query]})
   .then(SearchMessage)
-  .done((msg) => { SendMessage(msg, url) })
+  .done((msg) => { SendMessage(msg, url) });
 }
 
 exports.list = function (url){
@@ -124,5 +155,5 @@ exports.skip = function (user, url){
 exports.clear = function (user, url){
   mopidy.tracklist.clear()
   .then(()=>{ return ClearMessage(user) })
-  .done((msg)=> { SendMessage(msg, url) })
+  .done((msg)=> { SendMessage(msg, url) });
 }
