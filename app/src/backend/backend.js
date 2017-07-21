@@ -77,6 +77,7 @@ function SkipMessage(track, user){
   if (track){
     msg = {
       "text": `"${track.name}" was skipped by @${user}`,
+      "fallback": "Track skipped",
       "response_type": "in_channel"
     }
   }
@@ -86,7 +87,6 @@ function SkipMessage(track, user){
       "response_type": "ephimeral"
     }
   }
-  console.log("This is the skip message", msg)
   return msg
 }
 
@@ -94,6 +94,7 @@ function ClearMessage(user){
   console.log("Clearing playlist")
   let msg = {
     "text": `Playlist was cleared by @${user}`,
+    "fallback": "Playlist cleared",
     "response_type": "in_channel"
   }
   return msg
@@ -115,13 +116,13 @@ exports.list = function (url){
 
 exports.skip = function (user, url){
   mopidy.playback.getCurrentTrack()
-  .then((track)=>{ SkipMessage(track, user) })
+  .then((track)=>{ return SkipMessage(track, user) })
   .then((msg) => { SendMessage(msg, url) })
-  .done(mopidy.playback.next());
+  .done(()=>{ mopidy.playback.next(); });
 }
 
 exports.clear = function (user, url){
   mopidy.tracklist.clear()
-  .then(()=>{ ClearMessage(user) })
+  .then(()=>{ return ClearMessage(user) })
   .done((msg)=> { SendMessage(msg, url) })
 }
