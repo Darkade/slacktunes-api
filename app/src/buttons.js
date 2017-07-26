@@ -11,17 +11,27 @@ exports.buttons = function(req, res){
     case "addSong":
       let songuri = actions[0].selected_options[0].value;
 
-      mopidy.tracklist.add(null, null, songuri, null)
-      .done((songName)=>{
-        res.send(`Se agregó`)
+      mopidy.playback.getState()
+      .then((state)=>{
+        console.log("ESTADO:", state);
+        if (state == "stopped"){
+          console.log("ESTAPARADO")
+          mopidy.tracklist.clear()
+        }
+        return true;
+      })
+      .then(()=>{
+        console.log("Agregar")
+        mopidy.tracklist.add(null, null, songuri, null)
+        .done((songName)=>{
+          res.send(`Se agregó`)
+        })
+        return true;
+      })
+      .then(()=>{
+            mopidy.playback.play()
       })
 
-      mopidy.playback.getCurrentTrack()
-      .then((track)=>{
-        if (!track){
-          mopidy.playback.play()
-        }
-      })
     break;
   }
 }
