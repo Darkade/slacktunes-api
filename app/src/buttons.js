@@ -29,7 +29,17 @@ exports.buttons = function(req, res){
         return true;
       })
       .then(()=>{
+        mopidy.playback.getState()
+        .then((state)=>{
+          console.log("ESTADO:", state);
+          if (state != "playing"){
+            console.log("ESTAPARADO")
             mopidy.playback.play()
+          }
+          return true;
+        })
+
+
       })
 
     break;
