@@ -55,10 +55,14 @@ function QueueMessage(tracks){
   if (tracks.length > 0){
     for (let tltrack of tracks){
       let track = tltrack.track;
-      tracklist.push(`${track.name} – ${track.album.artists[0].name}`);
+      tracklist.push(`${ tltrack.tlid }. ${track.name} – ${track.album.artists[0].name}`);
     }
     msg = {
-      "text": "This is the current tracklist \n" + tracklist.join("\n"),
+      "text": "This is the current tracklist",
+      "attachments": [{
+        "title": "Tracklist",
+        "text": tracklist.join("\n"),
+      }],
       "response_type": "ephemeral"
     }
   }
