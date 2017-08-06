@@ -23,8 +23,8 @@ exports.buttons = function(req, res){
       .then(()=>{
         console.log("Agregar")
         mopidy.tracklist.add(null, null, songuri, null)
-        .done((songName)=>{
-          res.send(`Se agregó`)
+        .done((tltrack)=>{
+          res.send(`Se agregó ${tltrack[0].track.name}`)
         })
         return true;
       })
