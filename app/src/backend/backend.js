@@ -113,20 +113,24 @@ function NowPlayingMessage(track){
       {
         "pretext": "_Now Playing:_",
         "title": track.name,
-        "title_link": env.listenurl,
-        "text": `${track.album.artists[0].name} - ${track.album.name}\n<${env.listenurl}|Listen here!>`,
+        "title_link": serviceLink(track.uri),
+        "text": `${track.album.artists[0].name} - ${track.album.name}`,
         "mrkdwn_in": [
           "text",
           "pretext",
           "footer"
         ],
         "thumb_url": track.album.images[0] || "",
-        "footer": `Try typing \`/mopidy\` to learn more!`,
+        "footer": `<${env.listenurl}|Listen here!> | Try typing \`/mopidy\` to learn more!`,
         "footer_icon": "https://emoji.slack-edge.com/T2A1W6938/cassette/daff7a64b5c7863d.png",
       }
     ]
   }
   return msg
+}
+
+function serviceLink(songuri){
+  return "https://play.google.com/music/m/" + songuri.split(":").pop()
 }
 
 function isStopped(state){
