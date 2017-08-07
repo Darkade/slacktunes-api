@@ -129,6 +129,32 @@ function NowPlayingMessage(track){
   return msg
 }
 
+function isStopped(state){
+  return state == "stopped"
+}
+
+function addSongUri(songuri){
+  return mopidy.tracklist.add(null, null, songuri, null)
+}
+
+function addedMessage(tltracks){
+  let msg = {
+    "text": `${tltracks[0].track.name} – added to tracklist`,
+    "response_type": "ephemeral"
+  }
+  return msg
+}
+
+function playStopped(){
+  mopidy.playback.getState()
+  .then((state)=>{
+    if (state != "playing"){
+      mopidy.playback.play()
+    }
+    return true;
+  })
+}
+
 /***********************/
 
 exports.postSong = function (){
@@ -160,4 +186,19 @@ exports.clear = function (user, url){
   mopidy.tracklist.clear()
   .then(()=>{ return ClearMessage(user) })
   .done((msg)=> { SendMessage(msg, url) });
+}
+
+exports.add = function (songuri, url){
+  mopidy.playback.getState()
+  .then(isStopped)
+  .then((clear)=>{
+    if (clear) {
+      mopidy.tracklist.clear()
+    }
+    return songuri
+  })
+  .then(addSongUri)
+  .then(addedMessage)
+  .then((msg)=> { SendMessage(msg, url) })
+  .then(playStopped)
 }
