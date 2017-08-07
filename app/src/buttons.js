@@ -11,6 +11,7 @@ exports.buttons = function(req, res){
   switch (callback){
     case "addSong":
       let songuri = actions[0].selected_options[0].value;
+      res.send("...adding");
       backend.add(songuri, url);
     break;
   }
