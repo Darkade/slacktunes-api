@@ -5,6 +5,7 @@ var env = require('./src/env');
 var commands = require('./src/commands');
 var buttons = require('./src/buttons');
 var events = require('./src/events');
+var slackevents = require('./src/slackevents');
 
 // Instantiates Express and assigns our app variable to it
 var app = express();
@@ -46,3 +47,4 @@ app.get('/oauth', (req, res)=>{
 
 app.post('/command', commands.commands);
 app.post('/buttons', buttons.buttons);
+app.post('/events', slackevents.slackevents);
