@@ -6,38 +6,41 @@ let mopidy = mpd.mopidy;
 let SendMessage = comm.SendMessage;
 
 function SearchMessage(searchResult){
-  console.log("... looking for tracks")
+  console.log("... looking for tracks");
   let msg = "";
 
-  if (searchResult[1].tracks) {
-    let tracks = searchResult[1].tracks.slice(0,5);
-    let options = Array();
+  if (searchResult.length >= 1) {
+    let results = searchResult.pop();
+    if(results.tracks){
+      let tracks = results.tracks.slice(0,5);
+      let options = Array();
 
-    for (let track of tracks){
-      options.push({"text": `${track.name} – ${track.album.artists[0].name} – ${track.album.name} (${track.date})`,
-      "value": track.uri});
-    }
+      for (let track of tracks){
+        options.push({"text": `${track.name} – ${track.album.artists[0].name} – ${track.album.name} (${track.date})`,
+        "value": track.uri});
+      }
 
-    msg = {
-      "text": "I found these songs:",
-      "response_type": "ephemeral",
-      "attachments": [
-        {
-          "text": "Choose one to add to the playlist...",
-          "fallback": "Found some songs...",
-          "color": "#3AA3E3",
-          "attachment_type": "default",
-          "callback_id": "addSong",
-          "actions": [
-            {
-              "name": "searchresults",
-              "text": "Pick a song...",
-              "type": "select",
-              "options": options
-            }
-          ]
-        }
-      ]
+      msg = {
+        "text": "I found these songs:",
+        "response_type": "ephemeral",
+        "attachments": [
+          {
+            "text": "Choose one to add to the playlist...",
+            "fallback": "Found some songs...",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "callback_id": "addSong",
+            "actions": [
+              {
+                "name": "searchresults",
+                "text": "Pick a song...",
+                "type": "select",
+                "options": options
+              }
+            ]
+          }
+        ]
+      }
     }
   }
   else {
@@ -106,6 +109,7 @@ function ClearMessage(user){
 }
 
 function NowPlayingMessage(track){
+  let artists = track.album.artists || [{'name': ""}];
   let msg = {
     "fallback": `Now playing ${track.name}`,
     "response_type": "in_channel",
@@ -114,7 +118,7 @@ function NowPlayingMessage(track){
         "pretext": "_Now Playing:_",
         "title": track.name,
         "title_link": serviceLink(track.uri),
-        "text": `${track.album.artists[0].name} - ${track.album.name}`,
+        "text": `${artists[0].name} - ${track.album.name}`,
         "mrkdwn_in": [
           "text",
           "pretext",
@@ -168,7 +172,7 @@ exports.postSong = function (){
 }
 
 exports.search = function (query, url){
-  mopidy.library.search({'any': [query]})
+  mopidy.library.search({'any': [query]}, uris=['gmusic:'])
   .then(SearchMessage)
   .done((msg) => { SendMessage(msg, url) });
 }
