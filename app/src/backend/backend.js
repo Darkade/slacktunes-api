@@ -134,7 +134,17 @@ function NowPlayingMessage(track){
 }
 
 function serviceLink(songuri){
-  return "https://play.google.com/music/m/" + songuri.split(":").pop()
+  let songservice = songuri.split(":")[0]
+  console.log(songuri);
+  switch (songservice){
+    case "youtube":
+      return "https://www.youtube.com/watch?v=" + songuri.split(".").pop();
+    break;
+    case "gmusic":
+      return "https://play.google.com/music/m/" + songuri.split(":").pop();
+    break;
+  }
+
 }
 
 function isStopped(state){
