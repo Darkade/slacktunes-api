@@ -173,6 +173,24 @@ function playStopped(){
   })
 }
 
+exports.getUri = function (url){
+  let re_music = /https?:\/\/play\.google\.com\/music\/m\/(\w+)\??.*/g
+  let re_yt1 = /https?:\/\/youtu\.be\/(\w+)\??.*/g
+  let re_yt2 = /https?:\/\/(www\.)?youtube\.com\/watch\?v=(\w+)&?.*/g
+
+  let songid = (re_music.exec(url) || re_yt1.exec(url) || re_yt2.exec(url) || []).pop();
+
+
+
+  let uri = "";
+  if (songid.length > 11){
+    uri = "gmusic:track:" + songid;
+  } else {
+    uri = "yt:http://www.youtube.com/watch?v=" + songid;
+  }
+  return uri;
+}
+
 /***********************/
 
 exports.postSong = function (){
